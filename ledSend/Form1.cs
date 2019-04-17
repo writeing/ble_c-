@@ -75,11 +75,16 @@ namespace ledSend
         }
         public string g_revData = "";
         private void ansyRevData(byte[] revbuff,int len)
-        {
+        {            
             string str = g_revData + Encoding.Default.GetString(revbuff);
             int lastIndex = str.LastIndexOf(';');
             string strRevCmd = str.Substring(0, lastIndex);
-            g_revData = str.Substring(lastIndex+1);
+            if (lastIndex == 0)
+            {
+                g_revData = str;
+            }
+            else
+                g_revData = str.Substring(lastIndex + 1);
             string[] strcmdItems = strRevCmd.Split(';');
             foreach(string cmditme in strcmdItems)
             {
@@ -129,6 +134,7 @@ namespace ledSend
                 }
 
             }
+            
         }
         public FileStream fs = null;
         public int revFileCount = 0;
@@ -311,6 +317,7 @@ namespace ledSend
         }
         private void btnSendData_Click(object sender, EventArgs e)
         {
+            pgbFileSIze.Value = 0;
             g_deviceInfo.localNum = getRadioDeviceNum();
             g_deviceInfo.sendObj = getSendObj();
             sendDataToBle();
@@ -360,14 +367,23 @@ namespace ledSend
         {
             int sendsize = Convert.ToInt32(g_deviceInfo.sendFileSize);
             int i = 0;
-            for (i = 0; i < sendsize; i += 1024)
+            for (i = 0; i < sendsize; i += 512)
             {
-                serialPort1.Write(data, i, 1024);
-                Thread.Sleep(200);
-                g_deviceInfo.sendCount += 1024;
+                try
+                {
+                    Thread.Sleep(400);
+                    serialPort1.Write(data, i, 512);
+                    g_deviceInfo.sendCount += 512;
+                }
+                catch (Exception)
+                {
+                    break;
+                }
+                pgbFileSIze.Value = (g_deviceInfo.sendCount * 100) / sendsize;
             }
-            serialPort1.Write(data, i, sendsize - i);
             g_deviceInfo.sendCount += sendsize - i;
+            serialPort1.Write(data, i, sendsize - i);
+            pgbFileSIze.Value = (g_deviceInfo.sendCount * 100) / sendsize;
         }
         /// <summary>
         /// send data with serial to device
@@ -388,11 +404,13 @@ namespace ledSend
                 {
                     Thread.Sleep(100);
                 }
-                sendFileBuff(data);
                 g_deviceInfo.sendMode = deviceInfo.SEND_CMD;
+                sendFileBuff(data);
+
             }
             catch (Exception)
-            {                
+            {
+                rtbLog.AppendText("send file error\r\n");
             }
         }
         private bool checkDeviceStatus()
@@ -415,11 +433,8 @@ namespace ledSend
             byte[] sendData = getSendFile();
             //send data      
             _sendData(temp, sendData);
-            rtbLog.AppendText("数据发送完成，发送数据长度:" + g_deviceInfo.sendCount.ToString() + "\r\n");
+            rtbLog.AppendText("数据发送完成，发送数据长度:" + g_deviceInfo.sendFileSize.ToString() + "\r\n");
         }
-
-
-
 
         /// <summary>
         /// 
@@ -447,6 +462,14 @@ namespace ledSend
             timer1.Start();
 
 
+        }
+
+        private void btnSendNum_Click(object sender, EventArgs e)
+        {
+            g_deviceInfo.localNum = getRadioDeviceNum();
+            string sendbuff = "fileNum:" + g_deviceInfo.localNum.ToString() + ";";
+            serialPort1.Write(sendbuff);
+            rtbLog.AppendText("本地设备号发送成功\r\n");            
         }
     }
 }
