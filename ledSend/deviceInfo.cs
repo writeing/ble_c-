@@ -37,6 +37,7 @@ namespace ledSend
         public string revNum;
         public bool revMode;
         public bool revStatus;
+        public bool revFileEncrypt;
         //status 
         public bool SerialConnectStatus;
         public bool sendFileStatus;

@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnSendNum = new System.Windows.Forms.Button();
             this.radioButton3 = new System.Windows.Forms.RadioButton();
             this.radioButton2 = new System.Windows.Forms.RadioButton();
             this.radioButton1 = new System.Windows.Forms.RadioButton();
@@ -83,7 +84,8 @@
             this.chbdev1 = new System.Windows.Forms.CheckBox();
             this.pgbFileSIze = new System.Windows.Forms.ProgressBar();
             this.progressBar2 = new System.Windows.Forms.ProgressBar();
-            this.btnSendNum = new System.Windows.Forms.Button();
+            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
+            this.button2 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -118,6 +120,16 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(262, 116);
             this.panel1.TabIndex = 3;
+            // 
+            // btnSendNum
+            // 
+            this.btnSendNum.Location = new System.Drawing.Point(167, 90);
+            this.btnSendNum.Name = "btnSendNum";
+            this.btnSendNum.Size = new System.Drawing.Size(89, 23);
+            this.btnSendNum.TabIndex = 3;
+            this.btnSendNum.Text = "设置本地编号";
+            this.btnSendNum.UseVisualStyleBackColor = true;
+            this.btnSendNum.Click += new System.EventHandler(this.btnSendNum_Click);
             // 
             // radioButton3
             // 
@@ -461,7 +473,7 @@
             // 
             // serialPort1
             // 
-            this.serialPort1.BaudRate = 115200;
+            this.serialPort1.BaudRate = 38400;
             this.serialPort1.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(this.serialPort1_DataReceived);
             // 
             // timer1
@@ -602,21 +614,31 @@
             this.progressBar2.Size = new System.Drawing.Size(8, 8);
             this.progressBar2.TabIndex = 6;
             // 
-            // btnSendNum
+            // richTextBox1
             // 
-            this.btnSendNum.Location = new System.Drawing.Point(167, 90);
-            this.btnSendNum.Name = "btnSendNum";
-            this.btnSendNum.Size = new System.Drawing.Size(89, 23);
-            this.btnSendNum.TabIndex = 3;
-            this.btnSendNum.Text = "设置本地编号";
-            this.btnSendNum.UseVisualStyleBackColor = true;
-            this.btnSendNum.Click += new System.EventHandler(this.btnSendNum_Click);
+            this.richTextBox1.Location = new System.Drawing.Point(1028, 12);
+            this.richTextBox1.Name = "richTextBox1";
+            this.richTextBox1.Size = new System.Drawing.Size(315, 347);
+            this.richTextBox1.TabIndex = 7;
+            this.richTextBox1.Text = "";
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(1028, 365);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.TabIndex = 12;
+            this.button2.Text = "清空";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1008, 408);
+            this.ClientSize = new System.Drawing.Size(1378, 408);
+            this.Controls.Add(this.button2);
+            this.Controls.Add(this.richTextBox1);
             this.Controls.Add(this.progressBar2);
             this.Controls.Add(this.pgbFileSIze);
             this.Controls.Add(this.groupBox4);
@@ -704,6 +726,8 @@
         private System.Windows.Forms.ProgressBar pgbFileSIze;
         private System.Windows.Forms.ProgressBar progressBar2;
         private System.Windows.Forms.Button btnSendNum;
+        private System.Windows.Forms.RichTextBox richTextBox1;
+        private System.Windows.Forms.Button button2;
     }
 }
 
