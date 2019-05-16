@@ -160,8 +160,6 @@ namespace ledSend
                     }
                     catch (Exception)
                     {
-
-                        throw;
                     }
 
                     //将发送的字符串信息附加到文本框txtMsg上     

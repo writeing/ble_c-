@@ -161,8 +161,6 @@ namespace ledSend
             bool rpy = false;             
             fs.Write(buff, 0, len);
             revFileCount += len;
-            //System.Console.Write(revFileCount.ToString() + "\r\n");
-            //rtbLog.AppendText("rev len = " + revFileCount.ToString());
             if(len != 4096)
             {
                 rtbLog.AppendText("rev len = " + revFileCount.ToString() + "\r\nlen" + len.ToString() + "\r\n");
@@ -399,7 +397,7 @@ namespace ledSend
                 {
                     sendDataTcp(Encoding.UTF8.GetString(data, i, 4096), "");
                     g_deviceInfo.sendCount += 4096;
-                    Thread.Sleep(30);
+                    Thread.Sleep(100);
                 }
                 catch (Exception)
                 {
@@ -408,6 +406,7 @@ namespace ledSend
             }
             sendDataTcp(Encoding.UTF8.GetString(data, i, data.Length - i), "");
             g_deviceInfo.sendCount += (data.Length - i);
+            richTextBox1.AppendText(g_deviceInfo.sendCount.ToString() + "send len \r\n");
         }
         /// <summary>
         /// send data with serial to device
@@ -469,7 +468,7 @@ namespace ledSend
             byte[] sendData = getSendFile();
             //send data      
             _sendData(temp, sendData);
-            rtbLog.AppendText("数据发送完成，发送数据长度:" + g_deviceInfo.sendFileSize.ToString() + "\r\n");
+            rtbLog.AppendText("数据发送完成，发送数据长度:" + sendData.Length.ToString() + "\r\n");
         }
 
         /// <summary>
@@ -586,7 +585,8 @@ namespace ledSend
         }
         private void button2_Click(object sender, EventArgs e)
         {
-            sendDataTcp("deviceBengin:2;", "");
+            byte[] sendData = getSendFile();
+            sendFileBuff(sendData);
         }
     }
 }
