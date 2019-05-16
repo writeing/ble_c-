@@ -14,12 +14,10 @@ using System.Windows.Forms;
 namespace ledSend
 {
 
-    public delegate string TcpRevEventHandler(string revdata);
+    public delegate string TcpRevEventHandler(byte[] revbyte, int len);
     
     public partial class Form1 : Form
     {
-
-
         public event TcpRevEventHandler entRevHandler;
 
         public deviceInfo g_deviceInfo = new deviceInfo();
@@ -164,7 +162,11 @@ namespace ledSend
             fs.Write(buff, 0, len);
             revFileCount += len;
             //System.Console.Write(revFileCount.ToString() + "\r\n");
-            rtbLog.AppendText("rev len = " + revFileCount.ToString());
+            //rtbLog.AppendText("rev len = " + revFileCount.ToString());
+            if(len != 4096)
+            {
+                rtbLog.AppendText("rev len = " + revFileCount.ToString() + "\r\nlen" + len.ToString() + "\r\n");
+            }
             if (revFileCount == g_deviceInfo.revSize)
                 rpy = true;
             return rpy;
@@ -391,9 +393,21 @@ namespace ledSend
         {
             int sendsize = Convert.ToInt32(g_deviceInfo.sendFileSize);
             int i = 0;
-            sendDataTcp(Encoding.UTF8.GetString(data, 0, data.Length), "");
-            g_deviceInfo.sendCount += data.Length;
-            pgbFileSIze.Value = 100;
+            for (i = 0; i < data.Length; i += 4096)
+            {
+                try
+                {
+                    sendDataTcp(Encoding.UTF8.GetString(data, i, 4096), "");
+                    g_deviceInfo.sendCount += 4096;
+                    Thread.Sleep(30);
+                }
+                catch (Exception)
+                {
+                    break;
+                }                
+            }
+            sendDataTcp(Encoding.UTF8.GetString(data, i, data.Length - i), "");
+            g_deviceInfo.sendCount += (data.Length - i);
         }
         /// <summary>
         /// send data with serial to device
@@ -415,16 +429,26 @@ namespace ledSend
                 {
                     //Thread.Sleep(100);
                 }
+                
                 sendDataTcp("deviceBengin:1;", "");
                 g_deviceInfo.sendMode = deviceInfo.SEND_CMD;
+                Thread.Sleep(100);
+                //richTextBox1.AppendText(Encoding.UTF8.GetString(data, 0, data.Length).Length + "\r\n");
+                //create a thread send 
                 sendFileBuff(data);
 
+                ////负责监听客户端的线程:创建一个监听线程  
+                //ParameterizedThreadStart tp = new ParameterizedThreadStart(sendFileBuff);
+                //Thread threadwatch = new Thread(tp);
+                ////启动线程     
+                //threadwatch.Start(data);                
             }
             catch (Exception)
             {
                 rtbLog.AppendText("send file error\r\n");
             }
         }
+
         private bool checkDeviceStatus()
         {
             if (g_deviceInfo.sendFileStatus && g_deviceInfo.SerialConnectStatus)
@@ -506,28 +530,30 @@ namespace ledSend
             g_deviceInfo.localNum = getRadioDeviceNum();
             string sendbuff = "fileNum:" + g_deviceInfo.localNum.ToString() + ";";
             //serialPort1.Write(sendbuff);
-            rtbLog.AppendText("本地设备号发送成功\r\n");    
-            if(g_deviceInfo.localNum == 1)
+            rtbLog.AppendText("本地设备号发送成功\r\n");
+            entRevHandler += Form1_entRevHandler;
+            if (g_deviceInfo.localNum == 1)
             {
                 //server
-                entRevHandler += Form1_entRevHandler;
+               
                 tcps = new tcpServer(richTextBox1, entRevHandler);
             }
             else
             {
-                entRevHandler += Form1_entRevHandler;
                 tcpc = new tcpClient(richTextBox1,entRevHandler);
-                tcpc.ClientSendMsg("num:" + g_deviceInfo.localNum.ToString() + ":");
+                tcpc.ClientSendMsg("num:" + g_deviceInfo.localNum.ToString() + ";");
             }
         }
 
-        private string Form1_entRevHandler(string revdata)
+        private string Form1_entRevHandler(byte[] revbyte,int len)
         {
+            //string revdata
             //richTextBox1.AppendText("tcp:" + revdata + "\r\n");
+            string revdata = Encoding.UTF8.GetString(revbyte, 0, len);
             string str = "300";
             if (revdata.Contains("num:") == true)
             {
-                string num = revdata.Split(':')[1].Split(':')[0];
+                string num = revdata.Split(':')[1].Split(';')[0];
                 return num;
             }
             else if(revdata.Contains("FileObj") == true)
@@ -545,9 +571,8 @@ namespace ledSend
                 else
                 {
                     openWriteFile();
-
                     //save data to file
-                    bool ryp = saveDataToFile(Encoding.UTF8.GetBytes(revdata), revdata.Length);
+                    bool ryp = saveDataToFile(revbyte, len);
                     //if rev finish 
                     if (ryp == true)
                     {
@@ -555,14 +580,10 @@ namespace ledSend
                         closeWriteFile();
                         g_deviceInfo.revStatus = deviceInfo.REV_FINISH;
                     }
-                }
-               
+                }             
             }
-            
-
             return str;
         }
-
         private void button2_Click(object sender, EventArgs e)
         {
             sendDataTcp("deviceBengin:2;", "");

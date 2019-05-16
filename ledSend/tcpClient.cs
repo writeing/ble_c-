@@ -105,8 +105,8 @@ namespace ledSend
                     int length = socketclient.Receive(arrRecvmsg);
 
                     //将套接字获取到的字符数组转换为人可以看懂的字符串  
-                    string strRevMsg = Encoding.UTF8.GetString(arrRecvmsg, 0, length);                    
-                    _eventRev(strRevMsg);
+                            
+                    _eventRev(arrRecvmsg, length);
                 }
                 catch (Exception ex)
                 {

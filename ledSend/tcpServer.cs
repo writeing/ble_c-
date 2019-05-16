@@ -150,7 +150,7 @@ namespace ledSend
 
                     //将机器接受到的字节数组转换为人可以读懂的字符串     
                     string strSRecMsg = Encoding.UTF8.GetString(arrServerRecMsg, 0, length);
-                    string num = _eventRev(strSRecMsg);
+                    string num = _eventRev(arrServerRecMsg, length);
                     try
                     {
                         if (Convert.ToInt32(num) < 4)
