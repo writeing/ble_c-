@@ -126,6 +126,15 @@ namespace ledSend
                     {
                         g_deviceInfo.revFileEncrypt = true ;
                     }
+                    if (tcps == null)
+                    {
+                        tcpc.ClientSendMsg(Encoding.UTF8.GetBytes("deviceBengin:2;"));
+                        //sendDataTcp(Encoding.UTF8.GetBytes("deviceBengin:2;"), g_deviceInfo.revNum);
+                    }
+                    else
+                    {
+                        sendDataTcp(Encoding.UTF8.GetBytes("deviceBengin:2;"), g_deviceInfo.revNum);
+                    }
                     //g_deviceInfo.revMode = deviceInfo.DATA_MODE;
                     rtbLog.AppendText("fileEncrypt:" + value + "\r\n");
                 }
@@ -161,10 +170,10 @@ namespace ledSend
             bool rpy = false;             
             fs.Write(buff, 0, len);
             revFileCount += len;
-            if(len != 4096)
-            {
-                rtbLog.AppendText("rev len = " + revFileCount.ToString() + "\r\nlen" + len.ToString() + "\r\n");
-            }
+            //if(len != 4096)
+            //{
+            //    rtbLog.AppendText("rev len = " + revFileCount.ToString() + "\r\nlen" + len.ToString() + "\r\n");
+            //}
             if (revFileCount == g_deviceInfo.revSize)
                 rpy = true;
             return rpy;
@@ -353,11 +362,6 @@ namespace ledSend
         private Dictionary<string, string> setSendHeadFifo()
         {
             Dictionary<string, string> g_listHead = new Dictionary<string, string>();
-            g_listHead["fileName"] = g_deviceInfo.sendfileName;
-            g_listHead["fileSize"] = g_deviceInfo.sendFileSize;
-            g_listHead["fileType"] = g_deviceInfo.sendFileType;
-            g_listHead["fileNum"] = g_deviceInfo.localNum.ToString();
-            g_listHead["fileEncrypt"] = g_deviceInfo.sendFileEncrypt.ToString();
             string sendobj = "";
             for (int i = 0; i < 3; i++)
             {
@@ -365,10 +369,16 @@ namespace ledSend
                 {
                     continue;
                 }
-                if(g_deviceInfo.sendObj[i] == 1)
-                sendobj += (i+1);                
+                if (g_deviceInfo.sendObj[i] == 1)
+                    sendobj += (i + 1);
             }
             g_listHead["FileObj"] = sendobj;
+            g_listHead["fileName"] = g_deviceInfo.sendfileName;
+            g_listHead["fileSize"] = g_deviceInfo.sendFileSize;
+            g_listHead["fileType"] = g_deviceInfo.sendFileType;
+            g_listHead["fileNum"] = g_deviceInfo.localNum.ToString();            
+
+            g_listHead["fileEncrypt"] = g_deviceInfo.sendFileEncrypt.ToString();
             return g_listHead;
         }
         /// <summary>
@@ -391,20 +401,20 @@ namespace ledSend
         {
             int sendsize = Convert.ToInt32(g_deviceInfo.sendFileSize);
             int i = 0;
-            for (i = 0; i < data.Length; i += 4096)
-            {
-                try
-                {
-                    sendDataTcp(Encoding.UTF8.GetString(data, i, 4096), "");
-                    g_deviceInfo.sendCount += 4096;
-                    Thread.Sleep(100);
-                }
-                catch (Exception)
-                {
-                    break;
-                }                
-            }
-            sendDataTcp(Encoding.UTF8.GetString(data, i, data.Length - i), "");
+            //for (i = 0; i < data.Length; i += 4096)
+            //{
+            //    try
+            //    {
+            //        sendDataTcp(data, "");
+            //        g_deviceInfo.sendCount += 4096;
+            //        Thread.Sleep(100);
+            //    }
+            //    catch (Exception)
+            //    {
+            //        break;
+            //    }                
+            //}
+            sendDataTcp(data, "");
             g_deviceInfo.sendCount += (data.Length - i);
             richTextBox1.AppendText(g_deviceInfo.sendCount.ToString() + "send len \r\n");
         }
@@ -420,7 +430,7 @@ namespace ledSend
                 foreach (KeyValuePair<string, string> kv in temp)
                 {
                     string sendbuff = kv.Key + ":" + kv.Value + ";";
-                    sendDataTcp(sendbuff, temp["FileObj"]);
+                    sendDataTcp(Encoding.UTF8.GetBytes(sendbuff), temp["FileObj"]);
                     //serialPort1.Write(sendbuff);         
                     Thread.Sleep(100);
                 }
@@ -429,7 +439,8 @@ namespace ledSend
                     //Thread.Sleep(100);
                 }
                 
-                sendDataTcp("deviceBengin:1;", "");
+                sendDataTcp(Encoding.UTF8.GetBytes("deviceBengin:1;"), "");
+                Thread.Sleep(100);
                 g_deviceInfo.sendMode = deviceInfo.SEND_CMD;
                 Thread.Sleep(100);
                 //richTextBox1.AppendText(Encoding.UTF8.GetString(data, 0, data.Length).Length + "\r\n");
@@ -502,7 +513,7 @@ namespace ledSend
         public tcpServer tcps;
         public tcpClient tcpc;
         public string sendaim;
-        public void sendDataTcp(string tcpData,string aim)
+        public void sendDataTcp(byte [] tcpData,string aim,int len = 0)
         {
             if(aim != "")
                 sendaim = aim;
@@ -512,14 +523,22 @@ namespace ledSend
             }
             else
             {
-                if (sendaim.Contains("2") == true)
+                try
                 {
-                    tcps.sendMessage(tcpData, 2);
+                    if (sendaim.Contains("2") == true)
+                    {
+                        tcps.sendMessage(tcpData, 2, len);
+                    }
+                    if (sendaim.Contains("3") == true)
+                    {
+                        tcps.sendMessage(tcpData, 3, len);
+                    }
                 }
-                if (sendaim.Contains("1") == true)
+                catch (Exception)
                 {
-                    tcps.sendMessage(tcpData, 1);
+                    MessageBox.Show("send error");
                 }
+
             }
         }
 
@@ -527,23 +546,36 @@ namespace ledSend
         private void btnSendNum_Click(object sender, EventArgs e)
         {
             g_deviceInfo.localNum = getRadioDeviceNum();
+            g_deviceInfo.saveFilePath += g_deviceInfo.localNum.ToString() + "\\";
+            tbSaveFile.Text = g_deviceInfo.saveFilePath;
+
+
             string sendbuff = "fileNum:" + g_deviceInfo.localNum.ToString() + ";";
             //serialPort1.Write(sendbuff);
             rtbLog.AppendText("本地设备号发送成功\r\n");
             entRevHandler += Form1_entRevHandler;
             if (g_deviceInfo.localNum == 1)
             {
-                //server
-               
+                //server     
+                chbdev1.Enabled = false;
                 tcps = new tcpServer(richTextBox1, entRevHandler);
             }
-            else
+            else if (g_deviceInfo.localNum == 2)
             {
+                chbdev2.Enabled = false;
+                tcpc = new tcpClient(richTextBox1, entRevHandler);
+                tcpc.ClientSendMsg(Encoding.UTF8.GetBytes("num:" + g_deviceInfo.localNum.ToString() + ";"));
+            }
+            else if (g_deviceInfo.localNum == 3)
+            {
+                chbdev3.Enabled = false;
                 tcpc = new tcpClient(richTextBox1,entRevHandler);
-                tcpc.ClientSendMsg("num:" + g_deviceInfo.localNum.ToString() + ";");
+                tcpc.ClientSendMsg(Encoding.UTF8.GetBytes("num:" + g_deviceInfo.localNum.ToString() + ";"));
             }
         }
-
+        public string dataAim = "";
+        public string transfer = "";
+        public string isown = "";
         private string Form1_entRevHandler(byte[] revbyte,int len)
         {
             //string revdata
@@ -557,18 +589,51 @@ namespace ledSend
             }
             else if(revdata.Contains("FileObj") == true)
             {
-                richTextBox1.AppendText("rev fileobj\r\n");
-                sendDataTcp("deviceBengin:2;", g_deviceInfo.revNum);
+                richTextBox1.AppendText("rev fileobj" + revdata + "\r\n");
+                dataAim = revdata.Split(':')[1].Split(';')[0];
+                if (tcps != null)
+                {
+                    //check is server
+                    if (dataAim.Contains('2') == true)
+                    {
+                        //转发到2设备
+                        transfer = "2";
+                    }
+                    else if (dataAim.Contains('3') == true)
+                    {
+                        //转发到3设备
+                        transfer = "3";
+                    }
+                    else
+                    {
+                        transfer = "";
+                    }
+                    if(dataAim.Contains('1') == true)
+                    {
+                        isown = "1";
+                    }
+                    else
+                    {
+                        isown = "";
+                    }
+                }                    
                 ansyRevData(revdata, revdata.Length);
             }
             else
             {
+                if(transfer != "")
+                {
+                    //转发
+                    richTextBox1.AppendText("len = " + len.ToString() + "\r\n");
+                    sendDataTcp(revbyte, transfer, len);
+                }
                 if (g_deviceInfo.revMode == deviceInfo.CMD_MODE)
                 {
                     ansyRevData(revdata, revdata.Length);
                 }
                 else
                 {
+                    rtbLog.AppendText("len = " + len.ToString() + "\r\n");
                     openWriteFile();
                     //save data to file
                     bool ryp = saveDataToFile(revbyte, len);

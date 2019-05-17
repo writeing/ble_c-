@@ -125,12 +125,12 @@ namespace ledSend
         }
 
         //发送字符信息到服务端的方法  
-        public void ClientSendMsg(string sendMsg)
+        public void ClientSendMsg(byte[] sendMsg)
         {
             //将输入的内容字符串转换为机器可以识别的字节数组     
-            byte[] arrClientSendMsg = Encoding.UTF8.GetBytes(sendMsg);
+            //byte[] arrClientSendMsg = Encoding.UTF8.GetBytes(sendMsg);
             //调用客户端套接字发送字节数组     
-            socketclient.Send(arrClientSendMsg);
+            socketclient.Send(sendMsg);
             //将发送的信息追加到聊天内容文本框中     
             //this.txtMesg.AppendText(sendMsg + "\r\n");            
         }

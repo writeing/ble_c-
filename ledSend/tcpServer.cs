@@ -170,26 +170,31 @@ namespace ledSend
                 catch (Exception ex)
                 {
                     clientConnectionItems.Remove(socketServer.RemoteEndPoint.ToString());
-
-                    //txtMsg.AppendText("Client Count:" + clientConnectionItems.Count);
-
-                    //提示套接字监听异常  
-                    //txtMsg.AppendText("客户端" + socketServer.RemoteEndPoint + "已经中断连接" + "\r\n" + ex.Message + "\r\n" + ex.StackTrace + "\r\n");
-                    //关闭之前accept出来的和客户端进行通信的套接字 
                     socketServer.Close();
                     break;
                 }
             }
         }
-        public void sendMessage(string str,int num)
+        public void sendMessage(byte[] str,int num,int len = 0)
         {
-            foreach(var key in numclientConnect.Keys)
+            try
             {
-                if(key == num.ToString())
+                if (len == 0)
+                    len = str.Length;
+                foreach (var key in numclientConnect.Keys)
                 {
-                    numclientConnect[num.ToString()].Send(Encoding.UTF8.GetBytes(str));
+                    if (key == num.ToString())
+                    {
+                        //numclientConnect[num.ToString()].Send(Encoding.UTF8.GetBytes(str));
+                        numclientConnect[num.ToString()].Send(str, len,SocketFlags.None);
+                    }
                 }
             }
+            catch (Exception)
+            {
+                
+            }
+
         }
         ///      
         /// 获取当前系统时间的方法    
